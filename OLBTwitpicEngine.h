@@ -41,6 +41,6 @@
 
 
 @protocol OLBTwitpicEngineDelegate <NSObject>
-- (void)twitpicEngine:(OLBTwitpicEngine *)engine didUploadImageWithResponse:(NSString *)response;
+- (void)twitpicEngine:(OLBTwitpicEngine *)engine didUploadImageWithResponse:(NSString *)response statusCode:(NSInteger)statusCode;
 @end
 

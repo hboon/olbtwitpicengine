@@ -66,21 +66,29 @@
 	
 	// Handle the error or success
 	// If error, create error message and throw up UIAlertView
-	NSLog(@"Response Code: %d", [urlResponse statusCode]);
+//	NSLog(@"Response Code: %d", [urlResponse statusCode]);
 	if ([urlResponse statusCode] >= 200 && [urlResponse statusCode] < 300)
 	{
-		NSLog(@"urlResultString: %@", responseString);
+//		NSLog(@"urlResultString: %@", responseString);
 
 		NSString *match = [responseString stringByMatching:@"http[a-zA-Z0-9.:/]*"];  // Match the URL for the twitpic.com post
-		NSLog(@"match: %@", match);
-
-		// Send back notice to delegate
-		[delegate twitpicEngine:self didUploadImageWithResponse:match]; 
+//		NSLog(@"match: %@", match);
+		
+		NSRange matchedRange = [responseString rangeOfRegex:@"code=\"(\\d+)\"" capture:1];
+		if (matchedRange.location == NSNotFound) {
+			// Send back notice to delegate
+			[delegate twitpicEngine:self didUploadImageWithResponse:match statusCode:200];
+		} else {
+			NSString *matchCode = [responseString substringWithRange:matchedRange];
+//			NSLog(@"code: %@", matchCode);
+			// Send back notice to delegate
+			[delegate twitpicEngine:self didUploadImageWithResponse:match statusCode:[matchCode integerValue]];
+		}
 	}
 	else
 	{
 		NSLog(@"Error while uploading, got 400 error back or no response at all: %@", [urlResponse statusCode]);
-		[delegate twitpicEngine:self didUploadImageWithResponse:nil];  // Nil should mean "upload failed" to the delegate
+		[delegate twitpicEngine:self didUploadImageWithResponse:nil statusCode:[urlResponse statusCode]];  // Nil should mean "upload failed" to the delegate
 	}
 	
 	[pool release];	 // Release everything except responseData and urlResponse–they're autoreleased on creation
@@ -106,7 +114,8 @@
 	[urlRequest setHTTPMethod:@"POST"];	
 	
 	// Set the params
-	message		  = ([theMessage length] > 1) ? theMessage : @"Here's my new Light Table collage.";
+//	message		  = ([theMessage length] > 1) ? theMessage : @"Here's my new Light Table collage.";
+	message = theMessage;
 	imageData	  = UIImageJPEGRepresentation(image, kTwitpicImageJPEGCompression);
 	
 	// Setup POST body
@@ -118,7 +127,7 @@
 	postBody = [NSMutableData data];
 	[postBody appendData:[[NSString stringWithFormat:@"\r\n\r\n--%@\r\n", stringBoundary] dataUsingEncoding:NSUTF8StringEncoding]];
 	[postBody appendData:[[NSString stringWithString:@"Content-Disposition: form-data; name=\"source\"\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
-	[postBody appendData:[[NSString stringWithString:@"lighttable"] dataUsingEncoding:NSUTF8StringEncoding]];  // So Light Table show up as source in Twitter post
+	[postBody appendData:[[NSString stringWithString:@"simplytweetcom"] dataUsingEncoding:NSUTF8StringEncoding]];
 	
 	[postBody appendData:[[NSString stringWithFormat:@"\r\n--%@\r\n", stringBoundary] dataUsingEncoding:NSUTF8StringEncoding]];
 	[postBody appendData:[[NSString stringWithString:@"Content-Disposition: form-data; name=\"username\"\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
